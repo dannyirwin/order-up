@@ -1,0 +1,97 @@
+:root {
+  --color-1: rgb(22, 219, 147);
+  --color-2: rgb(232, 63, 111);
+  --color-3: rgb(34, 116, 165);
+
+  --background-color-1: rgba(22, 219, 147, 0.3);
+  --background-color-2: rgba(2232, 63, 111, 0.3);
+  --background-color-3: rgba(34, 116, 165, 0.3);
+}
+
+.App {
+  text-align: center;
+}
+
+.GameBoard {
+  display: grid;
+  grid-template-columns: 3fr 3fr 3fr;
+
+  justify-items: center;
+  align-items: center;
+  margin: auto;
+}
+
+.SetCard {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+
+  width: 17.5em;
+  height: 10em;
+  margin: 1.5em;
+  padding: 20px;
+
+  border-radius: 12px;
+  border: 2px lightgrey solid;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 3px 8px;
+  transition: 0.1s;
+}
+
+.SetCard:hover {
+  transform: scale(1.1);
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  transition: 0.1s;
+}
+
+.selected {
+  box-shadow: var(--icon-rgb) 0px 3px 10px;
+  border: solid var(--icon-rgb) 2px;
+  transform: scale(1.1);
+  transition: 0.1s;
+}
+
+.color-1 {
+  --icon-rgb: var(--color-1);
+  --icon-rgba: var(--background-color-1);
+}
+
+.color-2 {
+  --icon-rgb: var(--color-2);
+  --icon-rgba: var(--background-color-2);
+}
+
+.color-3 {
+  --icon-rgb: var(--color-3);
+  --icon-rgba: var(--background-color-3);
+}
+
+.fill-1 {
+  background: var(--icon-rgba);
+}
+
+.fill-2 {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0) 10px,
+    var(--icon-rgba) 10px,
+    var(--icon-rgba) 15px
+  );
+}
+
+.fill-3 {
+  background: rgba(0, 0, 0, 0);
+}
+
+svg {
+  height: 70px;
+  width: 70px;
+  stroke-width: 7px;
+  margin: auto 2px;
+  padding: 5px;
+  border-radius: 12px;
+  border: solid 5px var(--icon-rgb);
+
+  fill: var(--icon-rgb);
+  stroke: var(--icon-rgb);
+}
