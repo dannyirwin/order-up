@@ -3,6 +3,8 @@ import './App.css';
 import { useEffect, useState } from 'react';
 
 import GameBoard from './containers/GameBoard';
+import Controls from './components/Controls';
+import Header from './components/Header';
 
 import consumer from './cable';
 
@@ -80,7 +82,8 @@ function App() {
     const newGame = { ...game };
     newGame.cardsToShow = num;
     setGame(newGame);
-    postToDB(newGame);
+    patchToDB(newGame);
+    //postToDB(newGame)
   };
 
   const deckToIdString = deck => {
@@ -98,19 +101,19 @@ function App() {
     });
     newGame.cardsToShow = 12;
     setGame(newGame);
-    postToDB(newGame);
+    patchToDB(newGame);
+    //postToDB(newGame);
   };
 
-  const patchToDB = () => {
+  const patchToDB = newGame => {
     const gameObj = {
-      deck: deckToIdString(game.deck),
-      cardsToShow: game.cardsToShow
+      deck: deckToIdString(newGame.deck),
+      cardsToShow: newGame.cardsToShow
     };
     const fetchObj = {
       method: 'PATCH',
-      dataType: 'json',
       headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json',
         Accept: 'application/json'
       },
       body: JSON.stringify(gameObj)
@@ -150,7 +153,8 @@ function App() {
     const fetchObj = {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
       },
       body: JSON.stringify(gameObj)
     };
@@ -163,21 +167,21 @@ function App() {
       });
   };
 
-  const postToDB = newGame => {
-    console.log(game.cardsToShow);
-    const gameObj = {
-      deck: deckToIdString(newGame.deck),
-      cardsToShow: newGame.cardsToShow
-    };
-    const fetchObj = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(gameObj)
-    };
-    fetch('http://localhost:3000/games/', fetchObj);
-  };
+  // const postToDB = newGame => {
+  //   console.log(game.cardsToShow);
+  //   const gameObj = {
+  //     deck: deckToIdString(newGame.deck),
+  //     cardsToShow: newGame.cardsToShow
+  //   };
+  //   const fetchObj = {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json'
+  //     },
+  //     body: JSON.stringify(gameObj)
+  //   };
+  //   fetch('http://localhost:3000/games/', fetchObj);
+  // };
 
   useEffect(() => {
     getGameFromDb();
@@ -186,16 +190,18 @@ function App() {
 
   return (
     <div className='App'>
-      <button onClick={handleNewGame}> New Game </button>
-      {game.cardsToShow < 15 ? (
-        <button onClick={() => setCardsToShow(15)}>3 More Cards</button>
-      ) : null}
+      <Header
+        handleNewGame={handleNewGame}
+        game={game}
+        setCardsToShow={setCardsToShow}
+      />
       {game.deck.length > 0 ? (
         <GameBoard
           boardCards={dealCards()}
           removeCardsFromGame={removeCardsFromGame}
         />
       ) : null}
+      <div className='background-wing'></div>
     </div>
   );
 }
