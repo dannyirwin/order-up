@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 
 import GameBoard from './containers/GameBoard';
 
+import consumer from './cable';
+
 function App() {
   const generateNewDeck = () => {
     const deck = [];
@@ -48,42 +50,152 @@ function App() {
     return deck;
   };
 
-  const [deck, setDeck] = useState(shuffleDeck(generateNewDeck()));
-  const [boardCards, setBoardCards] = useState([]);
-  const [points, setPoints] = useState(0);
+  const emptyGame = {
+    deck: [],
+    cardsToShow: 12
+  };
+  const [game, setGame] = useState(emptyGame);
+  //const [cardsToShow, setCardsOnBoard] = useState(12);
 
-  const addPoint = () => {
-    setPoints(points + 1);
+  const dealCards = () => {
+    const cards = game.deck.slice(0, game.cardsToShow);
+    return cards;
   };
 
-  const dealCards = (targetNofCards = 12) => {
-    if (boardCards.length < targetNofCards) {
-      const cardsToAdd = targetNofCards - boardCards.length;
+  const createSubscription = () => {
+    consumer.subscriptions.create(
+      { channel: 'GamesChannel' },
+      {
+        received: game => {
+          if (typeof game.deck === 'string') {
+            game.deck = generateDeckFromIdString(game);
+          }
+          setGame(game);
+        }
+      }
+    );
+  };
 
-      const newDeck = deck.slice(0, -cardsToAdd);
-      const newBoardCards = boardCards.concat(deck.slice(-cardsToAdd));
+  const setCardsToShow = (num = 12) => {
+    const newGame = { ...game };
+    newGame.cardsToShow = num;
+    setGame(newGame);
+    postToDB(newGame);
+  };
 
-      setDeck(newDeck);
-      setBoardCards(newBoardCards);
-    }
+  const deckToIdString = deck => {
+    return deck.map(card => card.id).join(' ');
+  };
+
+  const removeCardsFromGame = selectedCards => {
+    const newGame = { ...game };
+    newGame.deck = newGame.deck.filter(card => {
+      return (
+        card.id !== selectedCards[0].id &&
+        card.id !== selectedCards[1].id &&
+        card.id !== selectedCards[2].id
+      );
+    });
+    newGame.cardsToShow = 12;
+    setGame(newGame);
+    postToDB(newGame);
+  };
+
+  const patchToDB = () => {
+    const gameObj = {
+      deck: deckToIdString(game.deck),
+      cardsToShow: game.cardsToShow
+    };
+    const fetchObj = {
+      method: 'PATCH',
+      dataType: 'json',
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify(gameObj)
+    };
+    fetch('http://localhost:3000/games/' + game.id, fetchObj);
+  };
+
+  const generateDeckFromIdString = apiGame => {
+    const apiDeckIds = apiGame.deck.split(' ');
+    const orderedDeck = generateNewDeck();
+    const deck = apiDeckIds.map(id =>
+      orderedDeck.find(el => el.id === parseInt(id))
+    );
+    return deck;
+  };
+
+  const getGameFromDb = () => {
+    fetch('http://localhost:3000/games/')
+      .then(res => res.json())
+      .then(apiGames => {
+        const newGame = apiGames[apiGames.length - 1];
+        if (newGame) {
+          const deck = generateDeckFromIdString(newGame);
+          newGame.deck = deck;
+          setGame(newGame);
+        } else {
+          handleNewGame();
+        }
+      });
+  };
+
+  const handleNewGame = () => {
+    const gameObj = {
+      deck: deckToIdString(shuffleDeck(generateNewDeck())),
+      cardsToShow: 12
+    };
+    const fetchObj = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(gameObj)
+    };
+    fetch('http://localhost:3000/games/', fetchObj)
+      .then(res => res.json())
+      .then(apiGames => {
+        const deck = generateDeckFromIdString(apiGames[0]);
+        apiGames[0].deck = deck;
+        setGame(apiGames[0]);
+      });
+  };
+
+  const postToDB = newGame => {
+    console.log(game.cardsToShow);
+    const gameObj = {
+      deck: deckToIdString(newGame.deck),
+      cardsToShow: newGame.cardsToShow
+    };
+    const fetchObj = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(gameObj)
+    };
+    fetch('http://localhost:3000/games/', fetchObj);
   };
 
   useEffect(() => {
-    dealCards();
-  });
+    getGameFromDb();
+    createSubscription();
+  }, []);
 
   return (
     <div className='App'>
-      <h2>{points}</h2>
-      {boardCards.length < 15 ? (
-        <h3 onClick={() => dealCards(15)}>3 More Cards</h3>
+      <button onClick={handleNewGame}> New Game </button>
+      {game.cardsToShow < 15 ? (
+        <button onClick={() => setCardsToShow(15)}>3 More Cards</button>
       ) : null}
-      <GameBoard
-        boardCards={boardCards}
-        dealCards={dealCards}
-        setBoardCards={setBoardCards}
-        addPoint={addPoint}
-      />
+      {game.deck.length > 0 ? (
+        <GameBoard
+          boardCards={dealCards()}
+          removeCardsFromGame={removeCardsFromGame}
+        />
+      ) : null}
     </div>
   );
 }

@@ -2,12 +2,7 @@ import { useState, useEffect } from 'react';
 
 import SetCard from '../components/SetCard';
 
-export default function GameBoard({
-  boardCards,
-  dealCards,
-  setBoardCards,
-  addPoint
-}) {
+export default function GameBoard({ boardCards, removeCardsFromGame }) {
   const [selectedCards, setSelectedCards] = useState([]);
 
   const toggleSelectedCard = card => {
@@ -39,24 +34,11 @@ export default function GameBoard({
     if (selectedCards.length >= 3) {
       if (checkIsSet()) {
         setTimeout(() => {
-          removeSelectedCards();
-          addPoint();
-          dealCards();
+          removeCardsFromGame(selectedCards);
         }, 500);
       }
       setTimeout(() => setSelectedCards([]), 500);
     }
-  };
-
-  const removeSelectedCards = () => {
-    const newCards = boardCards.filter(card => {
-      return (
-        card.id !== selectedCards[0].id &&
-        card.id !== selectedCards[1].id &&
-        card.id !== selectedCards[2].id
-      );
-    });
-    setBoardCards(newCards);
   };
 
   const checkIsSet = () => {
@@ -113,7 +95,9 @@ export default function GameBoard({
   };
 
   useEffect(() => {
-    handleSelectedCards();
+    if (selectedCards.length >= 3) {
+      handleSelectedCards();
+    }
   }, [selectedCards]);
 
   return <div className='GameBoard'>{showBoardCards()}</div>;
