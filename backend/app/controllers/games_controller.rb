@@ -18,7 +18,8 @@ class GamesController < ApplicationController
     def update
         game = Game.all.find(params[:id])
         game.update!(game_params)
-        redirect_to game
+        ActionCable.server.broadcast 'games_channel', game
+        render json: game
     end
 
     def show
